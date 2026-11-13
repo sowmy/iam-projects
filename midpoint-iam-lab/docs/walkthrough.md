@@ -56,6 +56,6 @@ I opened user `1001` to make sure everything had come through:
 - On the **Basic** tab, the name, given and family names, email, cost center and org unit all came from HR (`08-user-1001-attributes.jpg`).
 - Under **Projections**, there was exactly one SimplifyHR account (`09-user-1001-projection.jpg`).
 
-## What's next: Phase 2 (LDAP)
+## Phase 2: LDAP
 
-The OpenLDAP base `dc=idpnode,dc=net` is up and ready (`12-ldap-directory.jpg`). Next I'm adding an LDAP resource with outbound mappings, so every midPoint user gets provisioned into `ou=people,dc=idpnode,dc=net`.
+After this I connected OpenLDAP (`dc=idpnode,dc=net`, `12-ldap-directory.jpg` shows the empty base) as a second resource with outbound mappings, and created an `Employee` role that gives every enabled user an account under `ou=people`. That half of the pipeline, with its config and screenshots, is written up in [joiner-leaver](../joiner-leaver/).

@@ -1,8 +1,8 @@
 # HR-Driven Identity Lifecycle with midPoint
 
-In this lab I set up Evolveum midPoint so that HR is the source of truth for who works here. My HR system, SimplifyHR, holds the employee records. midPoint reads them, creates a user for each person, and keeps those users in line with HR from then on. OpenLDAP (`dc=idpnode,dc=net`) is set up as the directory that accounts will be pushed out to next.
+In this lab I set up Evolveum midPoint so that HR is the source of truth for who works here. My HR system, SimplifyHR, holds the employee records. midPoint reads them, creates a user for each person, and keeps those users in line with HR from then on. From there, midPoint pushes each person out to OpenLDAP (`dc=idpnode,dc=net`) as a directory account.
 
-> **Where it's at:** Phase 1, getting people from HR into midPoint and keeping them in sync, is done and working. Phase 2, pushing them out to LDAP, is what I'm working on now. See the [roadmap](#roadmap).
+> **Where it's at:** Both phases are done and working. Phase 1 gets people from HR into midPoint and keeps them in sync. Phase 2 provisions them out to LDAP through a role. The full pipeline is written up in [joiner-leaver](joiner-leaver/). See the [roadmap](#roadmap) for what's next.
 
 ---
 
@@ -11,7 +11,7 @@ In this lab I set up Evolveum midPoint so that HR is the source of truth for who
 ```mermaid
 flowchart LR
     HR["SimplifyHR<br/>hr.csv<br/>(system of record)"] -- "CSV connector<br/>inbound mappings" --> MP["midPoint<br/>Identity repository"]
-    MP -. "LDAP connector<br/>outbound mappings<br/>(Phase 2)" .-> LDAP["OpenLDAP<br/>dc=idpnode,dc=net"]
+    MP -- "LDAP connector<br/>outbound mappings<br/>(Employee role)" --> LDAP["OpenLDAP<br/>dc=idpnode,dc=net"]
     ADM["phpLDAPadmin"] --- LDAP
 ```
 
@@ -89,7 +89,7 @@ Here's user `1001` with every HR-sourced attribute filled in, and the HR account
 ![User 1001](screenshots/08-user-1001-attributes.jpg)
 ![User 1001 projection](screenshots/09-user-1001-projection.jpg)
 
-And the LDAP directory, ready for Phase 2:
+And the LDAP directory as it looked before Phase 2, with the base set up and empty. The provisioned entries are in [joiner-leaver](joiner-leaver/):
 
 ![LDAP](screenshots/12-ldap-directory.jpg)
 
@@ -106,7 +106,7 @@ And the LDAP directory, ready for Phase 2:
 
 ## Roadmap
 
-- [ ] **Phase 2: LDAP provisioning.** Add an LDAP resource for `dc=idpnode,dc=net` with outbound mappings (`uid`, `cn`, `sn`, `givenName`, `mail`), putting users under `ou=people`.
+- [x] **Phase 2: LDAP provisioning.** Add an LDAP resource for `dc=idpnode,dc=net` with outbound mappings (`uid`, `cn`, `sn`, `givenName`, `mail`), putting users under `ou=people`. Done: the DN script builds `uid=<empid>,ou=people,dc=idpnode,dc=net`, I also map `departmentNumber` and `employeeNumber`, and an auto-assigned `Employee` role creates the account.
 - [x] Recompute all users so they pick up the current email mapping.
 - [ ] Add a `fullName` mapping (`givenName + ' ' + familyName`).
 - [ ] Create org units per department and birthright roles assigned from `department`.
@@ -121,10 +121,13 @@ And the LDAP directory, ready for Phase 2:
 ├── README.md
 ├── docs/walkthrough.md               How I built it, step by step
 ├── config/
-│   ├── simplifyhr-resource.xml       The midPoint resource definition
+│   ├── simplifyhr-resource.xml       The HR resource definition (inbound)
+│   ├── outbound-mappings.xml         LDAP outbound mappings and correlation
+│   ├── employee-role.xml             Role that creates the LDAP account
 │   └── scripts/
 │       ├── email-generation.groovy
-│       └── status-to-activation.groovy
+│       ├── status-to-activation.groovy
+│       └── ldap-dn.groovy
 ├── joiner-leaver/                    The joiner / leaver use case write-up
 ├── sample-data/hr.csv                The HR file format (one sample row)
 └── screenshots/
@@ -132,4 +135,4 @@ And the LDAP directory, ready for Phase 2:
 
 ## Skills this covers
 
-Identity lifecycle management (joiner/leaver) · designing around an authoritative source · midPoint resource configuration · ConnId CSV connector · inbound mappings and Groovy expressions · correlation and sync policy · reconciliation · LDAP directory design
+Identity lifecycle management (joiner/leaver) · designing around an authoritative source · midPoint resource configuration · ConnId CSV connector · inbound mappings and Groovy expressions · correlation and sync policy · reconciliation · outbound mappings and DN construction · role-based provisioning · LDAP directory design

@@ -31,9 +31,13 @@ User 1001's linked accounts: the SimplifyHR record and the OpenLDAP entry at `ui
 
 The `Employee` business role. Its one inducement is an OpenLDAP account, so membership in the role is what gives someone a directory account.
 
-![LDAP entries under ou=people](ldap-people-entries.jpg)
+![LDAP tree under ou=people](ldap-people-tree.png)
 
-The directory in phpLDAPadmin: `ou=people` filled with one entry per employee. Sophie Müller's entry shows the values that came all the way from HR: `cn`, `departmentNumber`, email, `employeeNumber` and `givenName`.
+The directory tree in phpLDAPadmin: `ou=people` now holds `uid=1001` to `uid=1007`, one for each employee, all created by midPoint. The eighth entry, `uid=administrator`, is midPoint's built-in admin. It got an LDAP account because the `Employee` role is auto-assigned to every enabled user, admin included. Narrowing that rule to HR-sourced users would keep accounts like this out of the people branch.
+
+![LDAP entry for uid=1001](ldap-people-entries.jpg)
+
+Sophie Müller's entry (`uid=1001`) up close, showing the values that came all the way from HR: `cn`, `departmentNumber`, email, `employeeNumber` and `givenName`.
 
 ![Resources](ldap-resources.jpg)
 
