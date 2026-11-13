@@ -10,8 +10,7 @@ I'm adding these as I go, so the status column is honest about where each one is
 
 | Use case | Platform | Status |
 |---|---|---|
-| [HR-driven onboarding (joiner / leaver)](./midpoint-iam-lab/joiner-leaver/) | SimplifyHR → midPoint | ✅ Done |
-| Provisioning to LDAP | midPoint → OpenLDAP | 🚧 In progress |
+| [HR-driven provisioning, source to IGA to directory (joiner / leaver)](./midpoint-iam-lab/joiner-leaver/) | SimplifyHR → midPoint → OpenLDAP | ✅ Done |
 | Mover: department change drives access change | midPoint | ⏳ Planned |
 | Birthright roles from department | midPoint | ⏳ Planned |
 | SSO federation (OIDC / SAML) | Auth0 | ⏳ Planned |
@@ -20,7 +19,7 @@ I'm adding these as I go, so the status column is honest about where each one is
 
 - **midPoint** is the IGA platform. It holds the identities and runs the mappings, correlation and reconciliation.
 - **SimplifyHR** is a small Flask app that plays the HR system. It writes employee records to an `hr.csv` file, and midPoint reads that same file through its CSV connector.
-- **OpenLDAP** (`dc=idpnode,dc=net`) is the directory I'm provisioning accounts into next.
+- **OpenLDAP** (`dc=idpnode,dc=net`) is the directory midPoint provisions accounts into, through a role-based LDAP resource.
 - **Auth0** is for the SSO part, which I haven't started yet.
 
 ## Labs

@@ -1,0 +1,52 @@
+<!--
+  Employee business role (midPoint).
+  Exported from the lab's raw object view; operational metadata was removed.
+  The inducement gives every member an account on the OpenLDAP resource, and the
+  autoassign mapping makes every user who isn't disabled a member automatically.
+-->
+<role xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+      xmlns:org="http://midpoint.evolveum.com/xml/ns/public/common/org-3"
+      oid="037276c4-a07c-4988-8a5f-42c65365da9a">
+    <name>Employee</name>
+
+    <assignment>
+        <targetRef oid="00000000-0000-0000-0000-000000000321" relation="org:default" type="c:ArchetypeType">
+            <!-- Business role -->
+        </targetRef>
+    </assignment>
+
+    <!-- Membership in this role = an LDAP account -->
+    <inducement>
+        <construction>
+            <resourceRef oid="438a938c-f183-42a8-8e5f-16f62ecca432" relation="org:default" type="c:ResourceType">
+                <!-- OpenLDAP -->
+            </resourceRef>
+            <kind>account</kind>
+            <intent>default</intent>
+        </construction>
+        <focusType>c:UserType</focusType>
+    </inducement>
+
+    <!-- Assign the role automatically to every user who isn't disabled -->
+    <autoassign>
+        <enabled>true</enabled>
+        <focus>
+            <mapping>
+                <name>auto-employee</name>
+                <strength>strong</strength>
+                <source>
+                    <path>activation/administrativeStatus</path>
+                </source>
+                <condition>
+                    <script>
+                        <code>
+                            import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+                            administrativeStatus != ActivationStatusType.DISABLED
+                        </code>
+                    </script>
+                </condition>
+            </mapping>
+        </focus>
+    </autoassign>
+</role>

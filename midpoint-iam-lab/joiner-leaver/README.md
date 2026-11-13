@@ -1,29 +1,62 @@
-# Joiner / Leaver: HR-driven identity onboarding, source to IGA
+# Joiner / Leaver: HR-driven provisioning, source to IGA to directory
 
-The idea here is simple: HR is the only place a person's employment status should be decided. If someone is hired, midPoint should create their identity on its own. If HR marks them as gone, midPoint should disable them. Nobody should be creating or removing accounts by hand.
+This is the full pipeline working end to end. Someone gets hired in HR, midPoint creates their identity, and they get a directory account in OpenLDAP without anyone touching LDAP by hand. HR stays the only place employment status is decided, and everything downstream follows from it.
+
+```
+SimplifyHR (hr.csv)  ──inbound──▶  midPoint user  ──Employee role──▶  OpenLDAP account
+   system of record                  identity                          uid=<empid>,ou=people,dc=idpnode,dc=net
+```
 
 ## How it works
 
-Provisioning means accounts get created and kept up to date automatically from one trusted source, which here is HR. I set that up with inbound mappings. Each one takes a field from the HR record and turns it into an attribute on the midPoint user. Most are one-to-one, like `empid` to username or `department` to org unit. Two of them do a bit more work: one builds the email address from the person's name, and the other turns the HR status into enabled or disabled.
+The first half is inbound. midPoint reads each HR record, correlates it on employee ID so nobody gets duplicated, and builds the user from it. That includes generating the email and setting enabled or disabled from the HR status.
 
-Correlation is the check midPoint does before it creates anyone. It asks whether this HR record already belongs to an existing user, matching on employee ID. Without that, every sync could create duplicates, and duplicate identities are how people end up with access nobody can explain later.
+The second half is outbound. Outbound mappings do the reverse of inbound ones: they take properties of the midPoint user and write them onto the LDAP account. Given name, surname, a `cn` built from both, email, cost center as `departmentNumber`, and the employee ID as `employeeNumber`. They're all strong, so if someone edits an entry directly in LDAP, midPoint puts it back on the next sync.
+
+Every LDAP entry needs a distinguished name (DN), which is its full path in the directory tree. I build it with a small Groovy script: `uid=` plus the employee ID, placed under `ou=people`. The script is written so that a disabled user's DN points to `ou=inactive` instead, which keeps leavers out of the active people branch.
+
+The account itself comes from a role, not from a rule on the resource. I created an `Employee` business role whose inducement says "members get an OpenLDAP account". midPoint assigns that role automatically to every user who isn't disabled. So a new hire gets the account without anyone clicking anything, and the access is tied to a reason (being an employee) that you can review later. That's the difference between role-based provisioning and just pushing every user everywhere.
 
 ## Screenshots
 
+![Users page with two accounts each](users-two-accounts.jpg)
+
+All seven employees now have 2 accounts each: the HR record they came from, and the LDAP account midPoint created for them.
+
+![User 1001 projections](user-1001-projections.jpg)
+
+User 1001's linked accounts: the SimplifyHR record and the OpenLDAP entry at `uid=1001,ou=people,dc=idpnode,dc=net`, with the DN built by the script.
+
+![Employee role inducement](employee-role-inducement.jpg)
+
+The `Employee` business role. Its one inducement is an OpenLDAP account, so membership in the role is what gives someone a directory account.
+
+![LDAP entries under ou=people](ldap-people-entries.jpg)
+
+The directory in phpLDAPadmin: `ou=people` filled with one entry per employee. Sophie Müller's entry shows the values that came all the way from HR: `cn`, `departmentNumber`, email, `employeeNumber` and `givenName`.
+
+![Resources](ldap-resources.jpg)
+
+Both ends of the pipeline as midPoint resources: SimplifyHR as the source (CSV connector) and OpenLDAP as the target (LDAP connector 3.9.4).
+
 ![midPoint Users page](users-hr-identities.jpg)
 
-All seven employees (1001 to 1007) created from HR records. Each one got a generated `first.last@idpnode.net` email and is linked to exactly one HR account.
+The first stage on its own: the seven identities midPoint created from HR records, before LDAP was connected.
 
 ![Audit log filtered to today](audit-log-today.jpg)
 
-The audit log filtered to today, showing the reconciliation run going through each HR user. Every change midPoint makes can be traced back to the sync that caused it.
+The audit log filtered to the day of the HR reconciliation run, so every change midPoint made can be traced back to the sync that caused it.
 
 ## The config behind it
 
-- [`simplifyhr-resource.xml`](../config/simplifyhr-resource.xml) is the full resource definition: the CSV connector settings, all the inbound mappings, correlation on `empid`, the sync reactions, and the delete capability turned off so midPoint can never remove anything from HR.
-- [`email-generation.groovy`](../config/scripts/email-generation.groovy) builds the email address. It strips accents first, so Sophie Müller becomes `sophie.muller` and not something broken.
-- [`status-to-activation.groovy`](../config/scripts/status-to-activation.groovy) is the leaver part. Any HR status other than `Active` disables the user.
+**HR to midPoint (inbound)**
+- [`simplifyhr-resource.xml`](../config/simplifyhr-resource.xml): the HR resource, with inbound mappings, correlation on `empid`, and delete turned off so midPoint can never remove anything from HR.
+- [`email-generation.groovy`](../config/scripts/email-generation.groovy): builds `first.last@idpnode.net` and strips accents, so Müller becomes `muller`.
+- [`status-to-activation.groovy`](../config/scripts/status-to-activation.groovy): the leaver control. Any HR status other than `Active` disables the user.
 
-The sync reactions are what make it a joiner flow. A new HR record with no matching user gets a new user (`unmatched → addFocus`). A user who exists but isn't linked yet gets linked (`unlinked → link`). Anyone already linked just gets their HR changes applied (`linked → synchronize`).
+**midPoint to LDAP (outbound)**
+- [`outbound-mappings.xml`](../config/outbound-mappings.xml): the outbound mappings from the LDAP resource, showing what each LDAP attribute is built from, plus correlation. I trimmed it down to the part I designed and left out the connector settings and the bind password.
+- [`ldap-dn.groovy`](../config/scripts/ldap-dn.groovy): the DN script, `uid=<empid>` under `ou=people`, or `ou=inactive` for disabled users.
+- [`employee-role.xml`](../config/employee-role.xml): the `Employee` role, with the LDAP account inducement and the auto-assignment for every user who isn't disabled.
 
-I wrote up the full build step by step in the [walkthrough](../docs/walkthrough.md).
+The full build for the HR side is in the [walkthrough](../docs/walkthrough.md).

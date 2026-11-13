@@ -1,0 +1,115 @@
+<!--
+  Outbound mappings: midPoint user -> OpenLDAP account (inetOrgPerson).
+  This is the schemaHandling section of the OpenLDAP resource, trimmed down to
+  the part I designed: what each LDAP attribute is built from, the DN script,
+  and correlation. Connector settings and the bind password are left out.
+  Target: ldap:389, base context dc=idpnode,dc=net (ConnId LDAP connector 3.9.4).
+-->
+<schemaHandling xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+                xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3">
+    <objectType>
+        <kind>account</kind>
+        <intent>default</intent>
+        <displayName>Account</displayName>
+        <delineation>
+            <objectClass>ri:inetOrgPerson</objectClass>
+        </delineation>
+        <focus>
+            <type>c:UserType</type>
+        </focus>
+
+        <!-- DN: uid=<empid> under ou=people, or ou=inactive for disabled users -->
+        <attribute>
+            <ref>ri:dn</ref>
+            <outbound>
+                <name>DN</name>
+                <strength>strong</strength>
+                <source><path>name</path></source>
+                <expression>
+                    <script>
+                        <!-- see scripts/ldap-dn.groovy -->
+                        <code>import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+if (user?.activation?.administrativeStatus == ActivationStatusType.DISABLED) {
+    return 'uid=' + name + ',ou=inactive,dc=idpnode,dc=net'
+} else {
+    return 'uid=' + name + ',ou=people,dc=idpnode,dc=net'
+}</code>
+                    </script>
+                </expression>
+            </outbound>
+        </attribute>
+
+        <!-- cn: "Given Family" -->
+        <attribute>
+            <ref>ri:cn</ref>
+            <outbound>
+                <name>cn</name>
+                <strength>strong</strength>
+                <source><path>givenName</path></source>
+                <source><path>familyName</path></source>
+                <expression>
+                    <script>
+                        <code>givenName + ' ' + familyName</code>
+                    </script>
+                </expression>
+            </outbound>
+        </attribute>
+
+        <attribute>
+            <ref>ri:givenName</ref>
+            <outbound>
+                <name>firstname</name>
+                <strength>strong</strength>
+                <source><path>givenName</path></source>
+            </outbound>
+        </attribute>
+
+        <attribute>
+            <ref>ri:sn</ref>
+            <outbound>
+                <name>lastname</name>
+                <strength>strong</strength>
+                <source><path>familyName</path></source>
+            </outbound>
+        </attribute>
+
+        <attribute>
+            <ref>ri:mail</ref>
+            <outbound>
+                <name>emailAddress</name>
+                <strength>strong</strength>
+                <source><path>emailAddress</path></source>
+            </outbound>
+        </attribute>
+
+        <attribute>
+            <ref>ri:departmentNumber</ref>
+            <outbound>
+                <name>costCenter</name>
+                <strength>strong</strength>
+                <source><path>costCenter</path></source>
+            </outbound>
+        </attribute>
+
+        <attribute>
+            <ref>ri:employeeNumber</ref>
+            <outbound>
+                <name>employeeNumber</name>
+                <strength>strong</strength>
+                <source><path>name</path></source>
+            </outbound>
+        </attribute>
+
+        <!-- Match existing LDAP accounts to midPoint users on name (= empid) -->
+        <correlation>
+            <correlators>
+                <items>
+                    <name>account correlation</name>
+                    <enabled>true</enabled>
+                    <item><ref>name</ref></item>
+                </items>
+            </correlators>
+        </correlation>
+    </objectType>
+</schemaHandling>
