@@ -1,34 +1,28 @@
 # Enterprise IAM Implementation Lab
 
-I built this complete Identity and Access Management (IAM) environment from scratch to replicate how IAM provisioning works in a real enterprise engagement. The entire stack runs on a dedicated cloud server.
+This is where I keep my IAM lab work. I'm using a local lab environment (midPoint, an HR app and OpenLDAP) to work through the identity use cases you'd see in a real company: onboarding people from HR, provisioning their accounts, and cleaning up when they leave.
 
-I put this repository together to document my configurations, architectural decisions, and screenshots from the build. It serves as a practical portfolio of my hands-on IAM implementation skills.
+The environment itself came from a lab bundle. The configuration on top of it is mine, and that's what this repo documents: the configs I wrote, why I set things up the way I did, and screenshots of it working.
 
-## The Environment
+## Use cases
 
-Here is the tech stack I used for this lab:
+I'm adding these as I go, so the status column is honest about where each one is.
 
-| Component | Purpose in the Lab |
-| :--- | :--- |
-| **midPoint** | IGA platform — Handles the identity lifecycle, provisioning, and reconciliation. |
-| **SimplifyHR** | HR source of truth — A Python/Flask app I used to simulate an enterprise HRIS. |
-| **OpenLDAP** | Target directory — Where user accounts and groups are actually provisioned. |
-| **Auth0** | Access management — Handles OIDC and SAML federation. |
+| Use case | Platform | Status |
+|---|---|---|
+| [HR-driven onboarding (joiner / leaver)](./midpoint-iam-lab/joiner-leaver/) | SimplifyHR → midPoint | ✅ Done |
+| Provisioning to LDAP | midPoint → OpenLDAP | 🚧 In progress |
+| Mover: department change drives access change | midPoint | ⏳ Planned |
+| Birthright roles from department | midPoint | ⏳ Planned |
+| SSO federation (OIDC / SAML) | Auth0 | ⏳ Planned |
 
-## What I Built
+## What I'm working with
 
-I wired these systems together to handle standard enterprise use cases:
+- **midPoint** is the IGA platform. It holds the identities and runs the mappings, correlation and reconciliation.
+- **SimplifyHR** is a small Flask app that plays the HR system. It writes employee records to an `hr.csv` file, and midPoint reads that same file through its CSV connector.
+- **OpenLDAP** (`dc=idpnode,dc=net`) is the directory I'm provisioning accounts into next.
+- **Auth0** is for the SSO part, which I haven't started yet.
 
-* **JML (Joiner, Mover, Leaver) Automation:** Configured midPoint to automatically create, update, or disable directory accounts based on state changes in the HR system.
-* **Downstream Provisioning:** Built inbound and outbound mappings to flow identity attributes smoothly from HR, through midPoint, and into OpenLDAP.
-* **Identity Reconciliation:** Set up scheduled reconciliation tasks to catch and remediate any out-of-band changes made directly in LDAP.
-* **SSO Integration:** Hooked up Auth0 to handle authentication using standard federation protocols.
+## Labs
 
-## Documentation & Configs
-
-I broke the build process down into distinct sessions. You'll find my XML/JSON configurations, screenshots, and setup notes in the links below:
-
-* [Session 1: Infrastructure & HR Source Integration](./docs/session-1.md)
-* [Session 2: midPoint Configuration & Resource Mapping](./docs/session-2.md)
-* [Session 3: OpenLDAP Provisioning & Outbound Rules](./docs/session-3.md)
-* [Session 4: Auth0 Setup & Federation](./docs/session-4.md)
+- [midPoint IAM lab](./midpoint-iam-lab/) has the architecture, my full build walkthrough, the configs, and what I learned along the way.

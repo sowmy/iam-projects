@@ -1,0 +1,173 @@
+<!--
+  SimplifyHR resource (midPoint) - authoritative HR source.
+  Exported from the lab's raw object view; operational metadata and the cached
+  connector schema were removed for readability, and the connectorRef OID was
+  replaced with a type filter so the file imports into any midPoint instance.
+-->
+<resource xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+          xmlns:ri="http://midpoint.evolveum.com/xml/ns/public/resource/instance-3"
+          xmlns:icfc="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/connector-schema-3"
+          oid="c10751ea-caea-4138-befc-cd1db761ead4">
+    <name>SimplifyHR</name>
+    <description>HR resource to map users from source to IGA</description>
+    <lifecycleState>active</lifecycleState>
+
+    <connectorRef type="c:ConnectorType">
+        <!-- ConnId com.evolveum.polygon.connector.csv.CsvConnector v2.9 -->
+        <filter>
+            <q:text xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">connectorType = "com.evolveum.polygon.connector.csv.CsvConnector"</q:text>
+        </filter>
+    </connectorRef>
+
+    <connectorConfiguration>
+        <icfc:configurationProperties
+            xmlns:cfg="http://midpoint.evolveum.com/xml/ns/public/connector/icf-1/bundle/com.evolveum.polygon.connector-csv/com.evolveum.polygon.connector.csv.CsvConnector">
+            <cfg:fieldDelimiter>,</cfg:fieldDelimiter>
+            <cfg:filePath>/opt/midpoint/var/import/hr.csv</cfg:filePath>
+            <cfg:nameAttribute>empid</cfg:nameAttribute>
+            <cfg:uniqueAttribute>empid</cfg:uniqueAttribute>
+        </icfc:configurationProperties>
+    </connectorConfiguration>
+
+    <schemaHandling>
+        <objectType>
+            <kind>account</kind>
+            <intent>default</intent>
+            <displayName>Account</displayName>
+            <delineation>
+                <objectClass>ri:AccountObjectClass</objectClass>
+            </delineation>
+            <focus>
+                <type>c:UserType</type>
+            </focus>
+
+            <attribute>
+                <ref>ri:empid</ref>
+                <inbound>
+                    <name>EmpID</name>
+                    <strength>strong</strength>
+                    <target><path>name</path></target>
+                </inbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:firstname</ref>
+                <inbound>
+                    <name>FirstName</name>
+                    <strength>strong</strength>
+                    <target><path>givenName</path></target>
+                </inbound>
+                <inbound>
+                    <name>Email</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <!-- see scripts/email-generation.groovy -->
+                            <code>import com.evolveum.midpoint.xml.ns._public.common.common_3.*
+import java.text.Normalizer
+
+def first = basic.getAttributeValue(account, 'firstname')
+def last  = basic.getAttributeValue(account, 'lastname')
+first = first == null ? '' : first.toString().trim()
+last  = last  == null ? '' : last.toString().trim()
+
+def deaccent = { s -&gt;
+    def n = Normalizer.normalize(s, Normalizer.Form.NFD)
+    n = n.replaceAll('\\p{InCombiningDiacriticalMarks}+', '')
+    n = n.replace('ß', 'ss')
+    n = n.replaceAll('[^a-zA-Z0-9]', '')
+    return n
+}
+
+def email = (deaccent(first) + '.' + deaccent(last)).toLowerCase() + '@idpnode.net'
+return email</code>
+                        </script>
+                    </expression>
+                    <target><path>emailAddress</path></target>
+                </inbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:lastname</ref>
+                <inbound>
+                    <name>LastName</name>
+                    <strength>strong</strength>
+                    <target><path>familyName</path></target>
+                </inbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:department</ref>
+                <inbound>
+                    <name>Department</name>
+                    <strength>strong</strength>
+                    <target><path>organizationalUnit</path></target>
+                </inbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:costcenter</ref>
+                <inbound>
+                    <name>costcenter</name>
+                    <strength>strong</strength>
+                    <target><path>costCenter</path></target>
+                </inbound>
+            </attribute>
+
+            <attribute>
+                <ref>ri:status</ref>
+                <inbound>
+                    <name>Status</name>
+                    <strength>strong</strength>
+                    <expression>
+                        <script>
+                            <!-- see scripts/status-to-activation.groovy -->
+                            <code>import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+if (input == 'Active') {
+    return ActivationStatusType.ENABLED
+} else {
+    return ActivationStatusType.DISABLED
+}</code>
+                        </script>
+                    </expression>
+                    <target><path>activation/administrativeStatus</path></target>
+                </inbound>
+            </attribute>
+
+            <correlation>
+                <correlators>
+                    <items>
+                        <name>account correlation</name>
+                        <enabled>true</enabled>
+                        <item><ref>name</ref></item>
+                    </items>
+                </correlators>
+            </correlation>
+
+            <synchronization>
+                <reaction>
+                    <situation>linked</situation>
+                    <actions><synchronize/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unlinked</situation>
+                    <actions><link/></actions>
+                </reaction>
+                <reaction>
+                    <situation>unmatched</situation>
+                    <actions><addFocus/></actions>
+                </reaction>
+            </synchronization>
+        </objectType>
+    </schemaHandling>
+
+    <capabilities>
+        <configured xmlns:cap="http://midpoint.evolveum.com/xml/ns/public/resource/capabilities-3">
+            <!-- midPoint must never delete records in the HR system of record -->
+            <cap:delete>
+                <cap:enabled>false</cap:enabled>
+            </cap:delete>
+        </configured>
+    </capabilities>
+</resource>
