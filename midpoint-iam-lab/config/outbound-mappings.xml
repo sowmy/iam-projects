@@ -14,6 +14,16 @@
         <displayName>Account</displayName>
         <delineation>
             <objectClass>ri:inetOrgPerson</objectClass>
+            <!-- Employee accounts live under ou=people; service accounts (ou=services) are a separate type -->
+            <baseContext>
+                <objectClass>ri:organizationalUnit</objectClass>
+                <filter>
+                    <q:equal xmlns:q="http://prism.evolveum.com/xml/ns/public/query-3">
+                        <q:path>attributes/ri:dn</q:path>
+                        <q:value>ou=people,dc=idpnode,dc=net</q:value>
+                    </q:equal>
+                </filter>
+            </baseContext>
         </delineation>
         <focus>
             <type>c:UserType</type>

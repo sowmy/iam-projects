@@ -124,15 +124,17 @@ And the LDAP directory as it looked before Phase 2, with the base set up and emp
 │   ├── simplifyhr-resource.xml       The HR resource definition (inbound)
 │   ├── outbound-mappings.xml         LDAP outbound mappings and correlation
 │   ├── employee-role.xml             Role that creates the LDAP account
+│   ├── service-accounts-nhi.xml      Service account type: owner linking and orphan handling
 │   └── scripts/
 │       ├── email-generation.groovy
 │       ├── status-to-activation.groovy
 │       └── ldap-dn.groovy
 ├── joiner-leaver/                    The joiner / leaver use case write-up
+├── nhi-ownership/                    Service accounts linked to owners, orphans flagged
 ├── sample-data/hr.csv                The HR file format (one sample row)
 └── screenshots/
 ```
 
 ## Skills this covers
 
-Identity lifecycle management (joiner/leaver) · designing around an authoritative source · midPoint resource configuration · ConnId CSV connector · inbound mappings and Groovy expressions · correlation and sync policy · reconciliation · outbound mappings and DN construction · role-based provisioning · LDAP directory design
+Identity lifecycle management (joiner/leaver) · designing around an authoritative source · midPoint resource configuration · ConnId CSV connector · inbound mappings and Groovy expressions · correlation and sync policy · reconciliation · outbound mappings and DN construction · role-based provisioning · non-human identity ownership and orphan detection · LDAP directory design

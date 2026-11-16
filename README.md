@@ -11,6 +11,7 @@ I'm adding these as I go, so the status column is honest about where each one is
 | Use case | Platform | Status |
 |---|---|---|
 | [HR-driven provisioning, source to IGA to directory (joiner / leaver)](./midpoint-iam-lab/joiner-leaver/) | SimplifyHR → midPoint → OpenLDAP | ✅ Done |
+| [Non-human identities: service account owners and orphan detection](./midpoint-iam-lab/nhi-ownership/) | OpenLDAP → midPoint | ✅ Done |
 | Mover: department change drives access change | midPoint | ⏳ Planned |
 | Birthright roles from department | midPoint | ⏳ Planned |
 | SSO federation (OIDC / SAML) | Auth0 | ⏳ Planned |
