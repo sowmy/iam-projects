@@ -1,0 +1,87 @@
+<!--
+  RBAC roles (midPoint): department birthright roles and a requested role.
+  Exported from the lab's raw object view. Operational metadata, role membership
+  references and the Employee assignments that midPoint's auto-assignment added to
+  the roles themselves were removed for readability.
+  The Employee birthright role is in employee-role.xml.
+-->
+<objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
+         xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
+
+    <!-- Auto-assigned to everyone in Engineering. Note: the condition checks the
+         department only, not activation status (see Open points in rbac/README.md). -->
+    <role oid="7dc6beb4-7eb5-477e-951f-b54f39187f17">
+        <name>Engineering_Employee</name>
+        <description>Assigned to all Engineering department employees</description>
+        <assignment>
+            <targetRef oid="00000000-0000-0000-0000-000000000321" type="c:ArchetypeType"/> <!-- Business role -->
+        </assignment>
+        <archetypeRef oid="00000000-0000-0000-0000-000000000321" type="c:ArchetypeType"/>
+        <displayName>Engineering Employee</displayName>
+        <inducement>
+            <construction>
+                <resourceRef oid="438a938c-f183-42a8-8e5f-16f62ecca432" type="c:ResourceType"/> <!-- OpenLDAP -->
+                <kind>account</kind>
+                <intent>default</intent>
+            </construction>
+            <focusType>c:UserType</focusType>
+        </inducement>
+        <autoassign>
+            <enabled>true</enabled>
+            <focus>
+                <mapping>
+                    <name>autoassign-engineering</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>organizationalUnit</path>
+                    </source>
+                    <condition>
+                        <script>
+                            <code>organizationalUnit == 'Engineering'</code>
+                        </script>
+                    </condition>
+                </mapping>
+            </focus>
+        </autoassign>
+    </role>
+
+    <!-- Auto-assigned to everyone in HR. No inducement yet. -->
+    <role oid="16c619d7-a576-4d2d-9b1d-a8843bdf97d5">
+        <name>HR_Employee</name>
+        <description>Assigned to all HR department employees</description>
+        <assignment>
+            <targetRef oid="00000000-0000-0000-0000-000000000321" type="c:ArchetypeType"/> <!-- Business role -->
+        </assignment>
+        <archetypeRef oid="00000000-0000-0000-0000-000000000321" type="c:ArchetypeType"/>
+        <displayName>HR Employee</displayName>
+        <autoassign>
+            <enabled>true</enabled>
+            <focus>
+                <mapping>
+                    <name>autoassign-hr</name>
+                    <strength>strong</strength>
+                    <source>
+                        <path>organizationalUnit</path>
+                    </source>
+                    <condition>
+                        <script>
+                            <code>organizationalUnit == 'HR'</code>
+                        </script>
+                    </condition>
+                </mapping>
+            </focus>
+        </autoassign>
+    </role>
+
+    <!-- Requested role: no auto-assignment. No inducement and no approval policy yet. -->
+    <role oid="c99c3853-ccc4-4230-adf3-1e9edc788f30">
+        <name>Contractor</name>
+        <description>Manually requested role for contractor access, not auto-assigned, requires explicit request and approval</description>
+        <assignment>
+            <targetRef oid="00000000-0000-0000-0000-000000000321" type="c:ArchetypeType"/> <!-- Business role -->
+        </assignment>
+        <archetypeRef oid="00000000-0000-0000-0000-000000000321" type="c:ArchetypeType"/>
+        <displayName>Contractor</displayName>
+    </role>
+
+</objects>
