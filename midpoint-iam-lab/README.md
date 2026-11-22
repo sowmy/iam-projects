@@ -110,10 +110,10 @@ And the LDAP directory as it looked before Phase 2, with the base set up and emp
 - [x] Recompute all users so they pick up the current email mapping.
 - [ ] Add a `fullName` mapping (`givenName + ' ' + familyName`).
 - [x] Birthright roles assigned from `department`. Done in [rbac](rbac/): `Engineering_Employee` and `HR_Employee` are auto-assigned from the HR department, and `Contractor` is a requested role.
-- [ ] Make the department roles skip disabled users. The RBAC recompute showed a leaver picking up `Engineering_Employee` again (see [rbac](rbac/)).
+- [x] Make the department roles skip disabled users. Done for `Engineering_Employee` after the RBAC recompute showed a leaver picking it up again (see [rbac](rbac/)). `HR_Employee` still needs the same check.
 - [ ] Create org units per department.
 - [ ] Map `manager` to an org-manager relationship.
-- [ ] Test mover and leaver cases: change someone's department and terminate someone in HR, then check what happens in midPoint and LDAP.
+- [x] Test mover and leaver cases. The leaver is in [joiner-leaver](joiner-leaver/), and the mover (Emma, Engineering to HR) is in [rbac](rbac/).
 
 ---
 

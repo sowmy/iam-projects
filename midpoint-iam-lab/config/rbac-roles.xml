@@ -8,8 +8,9 @@
 <objects xmlns="http://midpoint.evolveum.com/xml/ns/public/common/common-3"
          xmlns:c="http://midpoint.evolveum.com/xml/ns/public/common/common-3">
 
-    <!-- Auto-assigned to everyone in Engineering. Note: the condition checks the
-         department only, not activation status (see Open points in rbac/README.md). -->
+    <!-- Auto-assigned to enabled users in Engineering. The status check was added
+         after the first recompute gave this role to a disabled leaver
+         (see "The fix" in rbac/README.md). -->
     <role oid="7dc6beb4-7eb5-477e-951f-b54f39187f17">
         <name>Engineering_Employee</name>
         <description>Assigned to all Engineering department employees</description>
@@ -35,9 +36,15 @@
                     <source>
                         <path>organizationalUnit</path>
                     </source>
+                    <source>
+                        <path>activation/administrativeStatus</path>
+                    </source>
                     <condition>
                         <script>
-                            <code>organizationalUnit == 'Engineering'</code>
+                            <code>
+                                import com.evolveum.midpoint.xml.ns._public.common.common_3.ActivationStatusType
+                                organizationalUnit == 'Engineering' &amp;&amp; administrativeStatus != ActivationStatusType.DISABLED
+                            </code>
                         </script>
                     </condition>
                 </mapping>
@@ -45,7 +52,7 @@
         </autoassign>
     </role>
 
-    <!-- Auto-assigned to everyone in HR. No inducement yet. -->
+    <!-- Auto-assigned to everyone in HR. No inducement yet, and no status check yet. -->
     <role oid="16c619d7-a576-4d2d-9b1d-a8843bdf97d5">
         <name>HR_Employee</name>
         <description>Assigned to all HR department employees</description>
