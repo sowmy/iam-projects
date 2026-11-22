@@ -109,7 +109,9 @@ And the LDAP directory as it looked before Phase 2, with the base set up and emp
 - [x] **Phase 2: LDAP provisioning.** Add an LDAP resource for `dc=idpnode,dc=net` with outbound mappings (`uid`, `cn`, `sn`, `givenName`, `mail`), putting users under `ou=people`. Done: the DN script builds `uid=<empid>,ou=people,dc=idpnode,dc=net`, I also map `departmentNumber` and `employeeNumber`, and an auto-assigned `Employee` role creates the account.
 - [x] Recompute all users so they pick up the current email mapping.
 - [ ] Add a `fullName` mapping (`givenName + ' ' + familyName`).
-- [ ] Create org units per department and birthright roles assigned from `department`.
+- [x] Birthright roles assigned from `department`. Done in [rbac](rbac/): `Engineering_Employee` and `HR_Employee` are auto-assigned from the HR department, and `Contractor` is a requested role.
+- [ ] Make the department roles skip disabled users. The RBAC recompute showed a leaver picking up `Engineering_Employee` again (see [rbac](rbac/)).
+- [ ] Create org units per department.
 - [ ] Map `manager` to an org-manager relationship.
 - [ ] Test mover and leaver cases: change someone's department and terminate someone in HR, then check what happens in midPoint and LDAP.
 
@@ -125,16 +127,18 @@ And the LDAP directory as it looked before Phase 2, with the base set up and emp
 │   ├── outbound-mappings.xml         LDAP outbound mappings and correlation
 │   ├── employee-role.xml             Role that creates the LDAP account
 │   ├── service-accounts-nhi.xml      Service account type: owner linking and orphan handling
+│   ├── rbac-roles.xml                Department roles and the requested Contractor role
 │   └── scripts/
 │       ├── email-generation.groovy
 │       ├── status-to-activation.groovy
 │       └── ldap-dn.groovy
 ├── joiner-leaver/                    The joiner / leaver use case write-up
 ├── nhi-ownership/                    Service accounts linked to owners, orphans flagged
+├── rbac/                             Department birthright roles and a requested role
 ├── sample-data/hr.csv                The HR file format (one sample row)
 └── screenshots/
 ```
 
 ## Skills this covers
 
-Identity lifecycle management (joiner/leaver) · designing around an authoritative source · midPoint resource configuration · ConnId CSV connector · inbound mappings and Groovy expressions · correlation and sync policy · reconciliation · outbound mappings and DN construction · role-based provisioning · non-human identity ownership and orphan detection · LDAP directory design
+Identity lifecycle management (joiner/leaver) · designing around an authoritative source · midPoint resource configuration · ConnId CSV connector · inbound mappings and Groovy expressions · correlation and sync policy · reconciliation · outbound mappings and DN construction · role-based provisioning · birthright and requested roles · non-human identity ownership and orphan detection · LDAP directory design
